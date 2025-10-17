@@ -1,0 +1,7 @@
+- name: 部署Calico 网络插件
+  hosts: master
+  become: yes
+
+  tasks:
+    - name: 部署Calico 网络插件
+      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/release-v3.28/manifests/calico.yaml

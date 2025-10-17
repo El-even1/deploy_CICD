@@ -1,0 +1,40 @@
+- name: 安装docker
+  hosts: all_node
+  become: yes
+  become_user: root # 默认为root，可以不显示指定
+  become_method: sudo # 默认为sudo，可以不显示指定。还可以使用su、doas
+  tasks:
+    - name: 安装docker-ce
+      dnf:
+        name:
+          - containerd.io
+          - docker-ce
+        state: latest
+
+    - name: 创建 /etc/docker 目录
+      file:
+        path: /etc/docker
+        state: directory
+
+    - name: 创建 daemon.json 文件
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "registry-mirrors": ["https://registry.docker-cn.com"],
+            "exec-opts": ["native.cgroupdriver=systemd"]
+          }
+
+    - name: 重新加载 systemd 管理的守护进程
+      shell: systemctl daemon-reload
+
+    - name: 重启 Docker 服务
+      service:
+        name: docker
+        state: restarted
+
+    - name: 设置 Docker 服务在系统启动时自动启动
+      service:
+        name: docker
+        enabled: yes
+

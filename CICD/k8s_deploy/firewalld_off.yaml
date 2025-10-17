@@ -1,0 +1,15 @@
+- name: 关闭防火墙
+  hosts: all_node
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: 停止防火墙
+      systemd:
+        name: firewalld
+        state: stopped
+
+    - name: 配置防火墙禁止开机自启
+      systemd:
+        name: firewalld
+        enabled: no

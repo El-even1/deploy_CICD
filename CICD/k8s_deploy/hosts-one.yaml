@@ -1,0 +1,17 @@
+all_node:
+  hosts:
+    192.168.30.11:
+      ansible_port: 2222 # sshd端口
+      ansible_user: root # 连接node的用户
+
+master:
+  hosts:
+    192.168.30.11:
+      ansible_port: 2222 # sshd端口
+      ansible_user: root # 连接node的用户
+
+me:
+  hosts:
+    127.0.0.1:
+      ansible_port: 2222 # sshd端口
+      ansible_user: root # 连接0node的用户

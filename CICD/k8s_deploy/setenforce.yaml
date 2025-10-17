@@ -1,0 +1,13 @@
+- name: 关闭 SELinux 强制模式
+  hosts: all_node
+  become: yes
+  tasks:
+    - name: 临时关闭 SELinux 强制模式
+      shell: setenforce 0
+
+    - name: 永久设置 SELinux 为 permissive 模式
+      lineinfile:
+        path: /etc/selinux/config
+        regexp: '^(^SELINUX=.*)$'
+        line: '# \1'
+        backrefs: yes

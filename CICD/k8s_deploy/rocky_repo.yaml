@@ -1,0 +1,47 @@
+# 配置国内源，使用vpn可以不用配置国内源。因为先连接到国外在连接到国内下载软件反而可能会更慢
+- name: 配置国内软件源
+  hosts: all_node
+  become: yes
+  become_user: root # 默认为root，可以不显示指定
+  become_method: sudo # 默认为sudo，可以不显示指定。还可以使用su、doas
+  tasks:
+    - name: 查找所有 .repo 文件
+      find:
+        paths: /etc/yum.repos.d/
+        patterns: "rocky*.repo"
+      register: repo_files
+
+    - name: 重命名文件添加 .backup 后缀
+      shell: mv {{ item.path }} {{ item.path }}.backup
+      loop: "{{ repo_files.files }}"
+
+    - name: 生成软件源文件内容
+      shell: | 
+        repos=(BaseOS AppStream extras)
+        version=9
+        url=https://mirrors.aliyun.com/rockylinux
+        for repo in "${repos[@]}"; do
+        echo -e "[rocky-$repo]\nname=Rocky Linux \$releasever - $repo\nbaseurl=${url}/\$releasever/$repo/\$basearch/os/\nenabled=1\ngpgcheck=1\ngpgkey=${url}/RPM-GPG-KEY-Rocky-$version\n"
+        done
+        unset repos version url
+      register: repo
+
+    - name: 保存软件源文件内容
+      copy:
+        content: "{{ repo.stdout }}"
+        dest: /etc/yum.repos.d/mirror.aliyun.repo
+      notify:
+        - 更新软件源缓存 # 配置文件更改时会自动触发
+
+    - name: 添加epel软件仓库
+      dnf:
+        name:
+          - epel-release
+        state: latest
+      notify:
+        - 更新软件源缓存 # 配置文件更改时会自动触发
+
+  handlers:
+    - name: 更新软件源缓存
+      dnf:
+        update_cache: yes

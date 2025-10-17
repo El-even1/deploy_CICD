@@ -1,0 +1,65 @@
+- name: 清理现有的 Kubernetes 集群设置
+  hosts: master
+  become: yes
+
+  tasks:
+    - name: 停止 kubelet 服务
+      service:
+        name: kubelet
+        state: stopped
+        enabled: no
+
+    - name: 停止所有的 Docker 容器
+      shell: docker stop $(docker ps -aq)
+      ignore_errors: yes
+      args:
+        executable: /bin/bash
+
+    - name: 删除 Kubernetes 相关文件
+      file:
+        path: "{{ item }}"
+        state: absent
+        force: yes
+      with_items:
+        - /etc/kubernetes/manifests
+        - /etc/kubernetes/pki
+        - /var/lib/etcd
+        - /var/lib/kubelet
+        - /etc/cni/net.d
+        - /opt/cni/bin
+        - /etc/systemd/system/kubelet.service.d
+        - /etc/systemd/system/kubelet.service
+
+    - name: 删除 kubeadm 生成的所有相关配置文件
+      shell: |
+        rm -rf /etc/kubernetes/
+        rm -rf /var/lib/etcd/
+        rm -rf /var/lib/kubelet/*
+        rm -rf /etc/cni/net.d/*
+        rm -rf /opt/cni/bin/*
+      args:
+        executable: /bin/bash
+
+    - name: 重置 kubeadm 配置
+      shell: kubeadm reset -f
+      ignore_errors: yes
+
+    - name: 删除 IP tables rules
+      shell: |
+        iptables -F
+        iptables -t nat -F
+        iptables -t mangle -F
+        iptables -X
+      args:
+        executable: /bin/bash
+
+    - name: 删除 CNI 网络接口
+      shell: ip link delete cni0 || true
+
+    - name: 删除 flannel 网络接口
+      shell: ip link delete flannel.1 || true
+
+    - name: 重启 Docker 服务
+      service:
+        name: docker
+        state: restarted

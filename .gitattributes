@@ -1,0 +1,2 @@
+*.rpm filter=lfs diff=lfs merge=lfs -text
+CICD/cicd/gitlab_deploy/*.rpm filter=lfs diff=lfs merge=lfs -text

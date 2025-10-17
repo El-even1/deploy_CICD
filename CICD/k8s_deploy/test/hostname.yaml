@@ -1,0 +1,7 @@
+- name: Test ansible_hostname variable
+  hosts: master
+  gather_facts: yes  # 确保收集主机的 facts
+  tasks:
+    - name: Show ansible_hostname
+      debug:
+        msg: "The ansible_hostname is {{ ansible_hostname }}"

@@ -1,0 +1,1 @@
+kubeadm join 192.168.30.11:6443 --token 88p0xm.kcwtde7xzxppx30f --discovery-token-ca-cert-hash sha256:cc2cfbbf81fcbe1bd052e789f9fdd5f0750c2677707cf8d10e7838137cfc96e6  --cri-socket=unix:///run/cri-dockerd.sock

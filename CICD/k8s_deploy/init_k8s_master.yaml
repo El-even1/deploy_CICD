@@ -1,0 +1,39 @@
+- name: 配置 Kubernetes Master 节点
+  hosts: master
+  become: yes
+
+  vars:
+    advertise_address: "192.168.30.11"
+    image_repository: "registry.cn-hangzhou.aliyuncs.com/google_containers"
+    cri_socket: "unix:///run/cri-dockerd.sock"
+    master_node_name: "{{ ansible_hostname }}"  # 使用主机的名称
+
+  tasks:
+    - name: 初始化 kubeadm 配置文件
+      shell: |
+        kubeadm config print init-defaults > /tmp/kubeadm.yaml
+        sed -i "s#advertiseAddress.*#advertiseAddress: {{ advertise_address }}#g" /tmp/kubeadm.yaml
+        sed -i "s#name.*#name: {{ master_node_name }}#g" /tmp/kubeadm.yaml
+        sed -i "s#imageRepo.*#imageRepository: {{ image_repository }}#g" /tmp/kubeadm.yaml
+        sed -i "s#criSocket.*#criSocket: {{ cri_socket }}#g" /tmp/kubeadm.yaml
+      args:
+        executable: /bin/bash
+
+    - name: 加载 br_netfilter 模块
+      shell: modprobe br_netfilter
+
+    - name: 初始化 Kubernetes master
+      shell: kubeadm init --config /tmp/kubeadm.yaml
+
+    - name: 创建 kube 配置目录
+      file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+
+    - name: 拷贝 admin.conf 文件
+      shell: |
+        mkdir -p $HOME/.kube
+        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      args:
+        executable: /bin/bash

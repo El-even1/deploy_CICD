@@ -1,0 +1,40 @@
+- name: 配置docker软件源
+  hosts: all_node
+  become: yes
+  become_user: root # 默认为root，可以不显示指定
+  become_method: sudo # 默认为sudo，可以不显示指定。还可以使用su、doas
+  tasks:
+    - name: 删除临时的 GPG 密钥文件
+      file:
+        path: /tmp/docker-ce.gpg
+        state: absent
+
+    - name: 下载 GPG 密钥
+      get_url:
+        url: https://mirrors.aliyun.com/docker-ce/linux/rhel/gpg
+        dest: /tmp/docker-ce.gpg
+
+    - name: 导入 GPG 密钥
+      rpm_key:
+        state: present
+        key: /tmp/docker-ce.gpg
+
+    - name: 删除临时的 GPG 密钥文件
+      file:
+        path: /tmp/docker-ce.gpg
+        state: absent
+
+    - name: 下载软件源文件
+      shell: |
+        rm -rf /etc/yum.repos.d/docker-ce.repo*
+        wget -P /etc/yum.repos.d/ https://mirrors.aliyun.com/docker-ce/linux/rhel/docker-ce.repo
+
+    - name: 替换docker软件源url
+      shell: sed -i "s/download.docker.com/mirrors.aliyun.com\/docker-ce/g" /etc/yum.repos.d/docker-ce.repo
+      notify:
+        - 更新软件源缓存 # 配置文件更改时会自动触发
+
+  handlers:
+    - name: 更新软件源缓存
+      dnf:
+        update_cache: yes

@@ -1,0 +1,53 @@
+- name: 安装kubernetes
+  hosts: all_node
+  become: yes
+  become_user: root # 默认为root，可以不显示指定
+  become_method: sudo # 默认为sudo，可以不显示指定。还可以使用su、doas
+  tasks:
+    - name: 卸载冲突的 kubelet, kubeadm 和 kubectl 版本
+      dnf:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+          - kubernetes-cni
+        state: absent
+
+    - name: 安装kubelet kubeadm kubectl
+      dnf:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: latest
+
+    - name: 保持kubelet、kubeadm、kubectl版本
+      shell: |
+        sudo dnf versionlock kubelet kubeadm kubectl
+      args:
+        executable: /bin/bash
+
+    - name: 启动 k8s 服务
+      service:
+        name: kubelet
+        state: started
+
+    - name: 设置 kubelet 服务在系统启动时自动启动
+      service:
+        name: kubelet
+        enabled: yes
+
+    - name: 添加 kubelet 命令补全脚本
+      shell: |
+        kubectl completion bash > /etc/bash_completion.d/kubectl
+        kubeadm completion bash > /etc/bash_completion.d/kubeadm
+        source /etc/bash_completion.d/kubectl
+        source /etc/bash_completion.d/kubeadm
+      args:
+        executable: /bin/bash
+
+    - name: 配置cri-dockerd.socket
+      shell: crictl config runtime-endpoint unix:///run/cri-dockerd.sock
+      args:
+        executable: /bin/bash
+

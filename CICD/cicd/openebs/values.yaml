@@ -1,0 +1,46 @@
+# If you want to enable local pv as a dependency chart then set
+# `localprovisioner.enabled: false` and enable it as dependency chart.
+# If you are using custom configuration then update those configuration
+# under `localpv-provisioner` key.
+localprovisioner:
+  enabled: true
+  replicas: 1
+  enableLeaderElection: true
+  # These fields are deprecated. Please use the fields (see below)
+  # - deviceClass.enabled
+  # - hostpathClass.enabled
+  enableDeviceClass: true
+  enableHostpathClass: true
+  # This sets default directory used by the provisioner to provision
+  # hostpath volumes.
+  basePath: "/var/openebs/local"
+  # This sets the number of times the provisioner should try
+  # with a polling interval of 5 seconds, to get the Blockdevice
+  # Name from a BlockDeviceClaim, before the BlockDeviceClaim
+  # is deleted. E.g. 12 * 5 seconds = 60 seconds timeout
+  waitForBDBindTimeoutRetryCount: "12"
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  healthCheck:
+    initialDelaySeconds: 30
+    periodSeconds: 60
+  ## localprovisioner resource requests and limits
+  ## Reference: http://kubernetes.io/docs/user-guide/compute-resources/
+  resources: {}
+    # limits:
+    #   cpu: 1000m
+    #   memory: 2Gi
+    # requests:
+    #   cpu: 500m
+  #   memory: 1Gi
+
+  hostpathClass:
+    # Name of the default hostpath StorageClass
+    name: openebs-hostpath
+    # If true, enables creation of the openebs-hostpath StorageClass
+    enabled: true
+    # Available reclaim policies: Delete/Retain, defaults: Delete.
+    reclaimPolicy: Delete
+    # If true, sets the openebs-hostpath StorageClass as the default StorageClass
+    isDefaultClass: true

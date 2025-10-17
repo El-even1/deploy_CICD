@@ -1,0 +1,8 @@
+- name: 配置 Kubernetes Worker 节点
+  hosts: worker
+  become: yes
+  tasks:
+    - name: 加入 Kubernetes 集群
+      script: ./command/join_command.sh
+
+

@@ -1,0 +1,25 @@
+- name: 安装必要的软件包
+  hosts: all_node
+  become: yes
+  become_user: root # 默认为root，可以不显示指定
+  become_method: sudo # 默认为sudo，可以不显示指定。还可以使用su、doas
+  tasks:
+    - name: 安装必要的软件包
+      dnf:
+        name:
+          - vim
+          - wget
+          - curl
+          - bash-completion
+          - ca-certificates
+          - gnupg
+          - nfs-utils
+          - git
+          - dnf-command(versionlock)
+        state: latest
+
+  handlers:
+    - name: 更新软件源缓存
+      dnf:
+        update_cache: yes
+

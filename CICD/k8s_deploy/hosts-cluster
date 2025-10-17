@@ -1,0 +1,9 @@
+[allNode]
+192.168.30.11 ansible_user=root
+192.168.30.12 ansible_user=root
+[master]
+192.168.30.11 ansible_user=root
+[worker]
+192.168.30.12 ansible_user=root
+[me]
+127.0.0.1 ansible_user=root

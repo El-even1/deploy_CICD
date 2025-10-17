@@ -1,0 +1,19 @@
+---
+#- import_playbook: rocky_repo.yaml # 使用vpn不用配置国内源
+- import_playbook: install_require_software_package.yaml
+- import_playbook: docker_repo.yaml
+- import_playbook: kubernetes_repo.yaml
+
+- import_playbook: swap_off.yaml
+- import_playbook: setenforce.yaml
+- import_playbook: network.yaml
+- import_playbook: firewalld_off.yaml
+
+- import_playbook: install_docker.yaml
+- import_playbook: install_cri_dockerd.yaml
+- import_playbook: install_kubernetes.yaml
+- import_playbook: init_k8s_master.yaml # 只能初始成功一次，初始化成功以后不能再次初始化。如果初始化成功以后想再次初始化可以拍摄快照并恢复快照至初始化之前
+- import_playbook: get_join_command.yaml
+- import_playbook: join_k8s_cluster.yaml
+- import_playbook: deploy_pod.yaml
+- import_playbook: install_helm.yaml

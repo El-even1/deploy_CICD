@@ -1,0 +1,24 @@
+- name: 安装helm
+  hosts: me
+  become: yes
+
+  vars:
+    script: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    script_path: /tmp/get_helm.sh
+
+  tasks:
+    - name: 下载自动安装脚本
+      shell: curl -fsSL -o "{{script_path}}" "{{script}}"
+      args:
+        executable: /bin/bash
+
+    - name: 赋予脚本执行权限
+      shell: chmod 700 "{{script_path}}"
+
+    - name: 执行脚本
+      shell: "{{script_path}}"
+
+    - name: 删除脚本
+      file:
+        path: "{{script_path}}"
+        state: absent

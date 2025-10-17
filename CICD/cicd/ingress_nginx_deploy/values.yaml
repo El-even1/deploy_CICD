@@ -1,0 +1,35 @@
+controller:
+  # -- Optionally change this to ClusterFirstWithHostNet in case you have 'hostNetwork: true'.
+  # By default, while using host network, name resolution uses the host's DNS. If you wish nginx-controller
+  # to keep resolving names inside the k8s network, use ClusterFirstWithHostNet.
+  #  dnsPolicy: ClusterFirst
+  dnsPolicy: ClusterFirstWithHostNet
+  # -- Required for use with CNI based kubernetes installations (such as ones set up by kubeadm),
+  # since CNI and hostport don't mix yet. Can be deprecated once https://github.com/kubernetes/kubernetes/issues/23920
+  # is merged
+  hostNetwork: true
+  # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+  # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+  ingressClass: nginx
+
+  # -- Use a `DaemonSet` or `Deployment`
+  #  kind: Deployment
+  kind: DaemonSet
+
+  nodeSelector:
+    kubernetes.io/os: linux
+    ingress: "true" # 设置为刚才给node打的标签
+  service:
+    type: LoadBalancer
+    externalIPs: ["192.168.30.11"]
+
+  # -- Additional command line arguments to pass to Ingress-Nginx Controller
+  # E.g. to specify the default SSL certificate you can use
+  extraArgs:
+    # 读取cm流量转发配置，它会加上pod的启动参数
+    tcp-services-configmap: "$(POD_NAMESPACE)/tcp-services"
+  ## extraArgs:
+  ##   default-ssl-certificate: "<namespace>/<secret_name>"
+  ##   time-buckets: "0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10"
+  ##   length-buckets: "10,20,30,40,50,60,70,80,90,100"
+  ##   size-buckets: "10,100,1000,10000,100000,1e+06,1e+07"

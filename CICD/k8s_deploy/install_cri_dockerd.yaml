@@ -1,0 +1,69 @@
+- name: 安装cri-dockerd
+  hosts: all_node
+  become: yes
+  become_user: root # 默认为root，可以不显示指定
+  become_method: sudo # 默认为sudo，可以不显示指定。还可以使用su、doas
+  tasks:
+    - name: 删除cri-dockerd压缩包
+      file:
+        path: /tmp/cri-dockerd-0.3.15.amd64.tgz
+        state: absent
+
+    - name: 下载cri-dockerd压缩包
+      shell: wget -P /tmp https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.15/cri-dockerd-0.3.15.amd64.tgz
+
+    - name: 解压cri-dockerd压缩包
+      shell: tar -xf /tmp/cri-dockerd-*.amd64.tgz -C /usr/local
+
+    - name: 配置cri-dockerd服务
+      copy:
+        dest: /etc/systemd/system/cri-dockerd.service
+        content: |
+          [Unit]
+          Description=CRI Dockerd
+          Documentation=https://github.com/Mirantis/cri-dockerd
+          After=network.target docker.service
+          Wants=docker.service
+          
+          [Service]
+          ExecStart=/usr/local/cri-dockerd/cri-dockerd
+          Restart=always
+          RestartSec=10s
+          StartLimitInterval=0
+          LimitNOFILE=1048576
+          LimitNPROC=infinity
+          LimitCORE=infinity
+          TasksMax=infinity
+          TimeoutStartSec=0
+          
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: 配置cri-dockerd.socket
+      copy:
+        dest: /etc/systemd/system/cri-dockerd.socket
+        content: |
+          [Unit]
+          Description=CRI Docker Socket for the API
+          PartOf=cri-dockerd.service
+          
+          [Socket]
+          ListenStream=/var/run/cri-dockerd.sock
+          SocketMode=0660
+          SocketUser=root
+          SocketGroup=docker
+          
+          [Install]
+          WantedBy=sockets.target
+
+    - name: 重新加载 systemd 管理的守护进程
+      shell: systemctl daemon-reload
+
+    - name: 启动cri-dockerd.socket
+      service:
+        name: cri-dockerd.socket
+        state: restarted
+        enabled: yes
+
+    - name: 删除安装包
+      shell: rm -f /tmp/cri-dockerd-0.3.15.amd64.tgz*

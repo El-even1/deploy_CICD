@@ -1,0 +1,31 @@
+- name: 关闭交换分区
+  hosts: all_node
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: 关闭当前swap分区
+      shell: swapoff -a
+
+    - name: 永久禁用swap分区（注释/etc/fstab中的swap行）
+      lineinfile:
+        path: /etc/fstab
+        regexp: '^(\s*[^#].*\sswap\s.*)$'
+        line: '# \1'
+        backrefs: yes
+      notify:
+        - 重启服务
+
+    - name: 验证swap是否关闭
+      shell: free -m | grep Swap
+      register: swap_status
+
+    - name: 显示swap状态
+      debug:
+        msg: "Swap 状态：{{ swap_status.stdout }}"
+
+  handlers:
+    - name: 重启服务
+      systemd:
+        name: systemd-logind
+        state: restarted

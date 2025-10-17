@@ -1,0 +1,29 @@
+- name: 配置 Kubernetes Master 节点
+  hosts: master
+  become: yes
+  vars:
+    cri_socket: "unix:///run/cri-dockerd.sock"
+  tasks:
+    - name: 生成加入 k8s 的命令
+      shell: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: 创建临时文件并写入内容
+      copy:
+        content: "{{ join_command.stdout }} --cri-socket={{ cri_socket }}"
+        dest: /tmp/join_command.sh
+
+    - name: 将临时文件从远程主机复制到本地主机
+      fetch:
+        src: /tmp/join_command.sh
+        dest: ./command/join_command.sh
+        flat: yes
+
+    - name: 删除远程主机上的临时文件
+      file:
+        path: /tmp/join_command.sh
+        state: absent
+
+
+
+

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx
+data:
+  # 将外部ip的22端口的流量转发到命名空间gitlab中的service gitlab-gitlab-shell的22端口中
+  "22": "gitlab/gitlab-gitlab-shell:22"

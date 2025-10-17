@@ -1,0 +1,45 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
+stages:
+  - build
+  - upload-to-registry
+  - deploy
+
+build-go:
+  stage: build
+  script:
+    - go mod tidy
+    - go build -o myapp main.go
+  artifacts:
+    paths:
+      - myapp  # 保存生成的文件
+
+upload-to-registry:
+  stage: upload-to-registry
+  script:
+    - TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+    - IMAGE_NAME=core.harbor.domain/test-gitlab-runner/my-app
+    - IMAGE_TAG=$TIMESTAMP
+    - docker login -u admin -p harbor123456 core.harbor.domain
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+    - docker push $IMAGE_NAME:latest
+    - echo $IMAGE_NAME:$IMAGE_TAG > image.txt
+  artifacts:
+    paths:
+      - image.txt  # 保存生成的文件
+  dependencies:
+    - build-go
+
+deploy:
+  stage: deploy
+  script:
+    - image=$(cat image.txt)
+    - echo "Deploying image to $image..."
+    - sed -i "s|core.harbor.domain/test-gitlab-runner/my-app:latest|$image|g" myapp.yaml
+    - kubectl apply -f myapp.yaml
+  dependencies:
+    - upload-to-registry  # 确保能够获取 artifacts
